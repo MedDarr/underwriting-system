@@ -1,3 +1,5 @@
+import { Injectable } from '@nestjs/common';
+
 export interface AuditEventInput {
   userId?: number;
   applicationId?: number;
@@ -14,6 +16,7 @@ export interface AuditLogView {
   createdAt: string;
 }
 
+@Injectable()
 export class AuditService {
   private readonly logs: AuditLogView[] = [];
 
