@@ -1,3 +1,5 @@
+import { Injectable } from '@nestjs/common';
+
 export type ApplicationStatus =
   | 'draft'
   | 'registered'
@@ -25,6 +27,7 @@ export interface ApplicationView {
   createdAt: string;
 }
 
+@Injectable()
 export class ApplicationsService {
   private applications: ApplicationView[] = [];
 
