@@ -3,10 +3,9 @@ import './styles.css';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationCardPage } from './pages/ApplicationCardPage';
 import { AuditPage } from './pages/AuditPage';
-import { ApiPage } from './pages/ApiPage';
 import { demoApplications } from './services/api';
 
-type ViewMode = 'application' | 'audit' | 'api';
+type ViewMode = 'application' | 'audit';
 
 function App() {
   const [selectedId, setSelectedId] = useState(1);
@@ -40,31 +39,21 @@ function App() {
         >
           Журнал аудита
         </button>
-        <button
-          className={viewMode === 'api' ? 'tab activeTab' : 'tab'}
-          onClick={() => setViewMode('api')}
-        >
-          API-методы
-        </button>
       </nav>
 
-      {viewMode === 'api' ? (
-        <ApiPage />
-      ) : (
-        <section className="layout">
-          <ApplicationsPage
-            applications={demoApplications}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-          />
+      <section className="layout">
+        <ApplicationsPage
+          applications={demoApplications}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+        />
 
-          {viewMode === 'application' ? (
-            <ApplicationCardPage application={selected} />
-          ) : (
-            <AuditPage />
-          )}
-        </section>
-      )}
+        {viewMode === 'application' ? (
+          <ApplicationCardPage application={selected} />
+        ) : (
+          <AuditPage />
+        )}
+      </section>
     </main>
   );
 }
