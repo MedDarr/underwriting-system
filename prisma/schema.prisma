@@ -1,5 +1,3 @@
-// Initial database schema placeholder
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,9 +7,191 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Application {
-  id        String   @id @default(uuid())
-  status    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Role {
+  roleId      Int     @id @default(autoincrement()) @map("role_id")
+  name        String  @unique @db.VarChar(50)
+  description String? @db.Text
+  users       User[]
+
+  @@map("roles")
+}
+
+model User {
+  userId   Int    @id @default(autoincrement()) @map("user_id")
+  roleId   Int    @map("role_id")
+  fullName String @map("full_name") @db.VarChar(150)
+  email    String @unique @db.VarChar(150)
+  status   String @default("active") @db.VarChar(30)
+
+  role      Role          @relation(fields: [roleId], references: [roleId])
+  tasks     RoutingTask[]
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model Applicant {
+  applicantId  Int     @id @default(autoincrement()) @map("applicant_id")
+  fullName     String  @map("full_name") @db.VarChar(150)
+  phone        String  @db.VarChar(30)
+  email        String? @db.VarChar(150)
+  passportData String? @map("passport_data") @db.VarChar(120)
+
+  applications     InsuranceApplication[]
+  insuranceHistory InsuranceHistory[]
+  blacklistChecks  BlacklistCheck[]
+
+  @@map("applicants")
+}
+
+model InsuranceApplication {
+  applicationId     Int      @id @default(autoincrement()) @map("application_id")
+  applicantId       Int      @map("applicant_id")
+  responsibleUserId Int?     @map("responsible_user_id")
+  applicationNumber String   @unique @map("application_number") @db.VarChar(50)
+  status            String   @default("draft") @db.VarChar(50)
+  priority          String   @default("normal") @db.VarChar(30)
+  riskLevel         String?  @map("risk_level") @db.VarChar(30)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  applicant       Applicant        @relation(fields: [applicantId], references: [applicantId])
+  propertyObject  PropertyObject?
+  documents       Document[]
+  scoringResult   ScoringResult?
+  recommendations Recommendation[]
+  routingTasks    RoutingTask[]
+  auditLogs       AuditLog[]
+
+  @@map("insurance_applications")
+}
+
+model PropertyObject {
+  objectId         Int     @id @default(autoincrement()) @map("object_id")
+  applicationId    Int     @unique @map("application_id")
+  address          String  @db.VarChar(255)
+  area             Decimal @db.Decimal(10, 2)
+  constructionYear Int     @map("construction_year")
+  wallMaterial     String  @map("wall_material") @db.VarChar(100)
+  roofMaterial     String  @map("roof_material") @db.VarChar(100)
+  heatingType      String  @map("heating_type") @db.VarChar(100)
+  floors           Int
+  hasSecurityAlarm Boolean @default(false) @map("has_security_alarm")
+
+  application InsuranceApplication @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@map("property_objects")
+}
+
+model Document {
+  documentId    Int      @id @default(autoincrement()) @map("document_id")
+  applicationId Int      @map("application_id")
+  documentType  String   @map("document_type") @db.VarChar(80)
+  filePath      String   @map("file_path") @db.VarChar(255)
+  uploadedAt    DateTime @default(now()) @map("uploaded_at")
+
+  application InsuranceApplication @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model InsuranceHistory {
+  historyId     Int     @id @default(autoincrement()) @map("history_id")
+  applicantId   Int     @map("applicant_id")
+  insuranceType String  @map("insurance_type") @db.VarChar(100)
+  status        String  @db.VarChar(50)
+  sumInsured    Decimal @map("sum_insured") @db.Decimal(14, 2)
+
+  applicant Applicant @relation(fields: [applicantId], references: [applicantId], onDelete: Cascade)
+
+  @@map("insurance_history")
+}
+
+model BlacklistCheck {
+  checkId     Int      @id @default(autoincrement()) @map("check_id")
+  applicantId Int      @map("applicant_id")
+  result      String   @db.VarChar(30)
+  reason      String?  @db.Text
+  checkedAt   DateTime @default(now()) @map("checked_at")
+
+  applicant Applicant @relation(fields: [applicantId], references: [applicantId], onDelete: Cascade)
+
+  @@map("blacklist_checks")
+}
+
+model UnderwritingRule {
+  ruleId        Int    @id @default(autoincrement()) @map("rule_id")
+  ruleCode      String @unique @map("rule_code") @db.VarChar(50)
+  conditionText String @map("condition_text") @db.Text
+  weight        Int
+  action        String @db.VarChar(100)
+
+  riskFactors RiskFactor[]
+
+  @@map("underwriting_rules")
+}
+
+model ScoringResult {
+  scoringId     Int      @id @default(autoincrement()) @map("scoring_id")
+  applicationId Int      @unique @map("application_id")
+  totalScore    Int      @map("total_score")
+  riskLevel     String   @map("risk_level") @db.VarChar(30)
+  calculatedAt  DateTime @default(now()) @map("calculated_at")
+
+  application InsuranceApplication @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+  riskFactors RiskFactor[]
+
+  @@map("scoring_results")
+}
+
+model RiskFactor {
+  riskId     Int    @id @default(autoincrement()) @map("risk_id")
+  scoringId  Int    @map("scoring_id")
+  ruleId     Int    @map("rule_id")
+  factorName String @map("factor_name") @db.VarChar(150)
+  weight     Int
+
+  scoring ScoringResult    @relation(fields: [scoringId], references: [scoringId], onDelete: Cascade)
+  rule    UnderwritingRule @relation(fields: [ruleId], references: [ruleId])
+
+  @@map("risk_factors")
+}
+
+model Recommendation {
+  recommendationId   Int    @id @default(autoincrement()) @map("recommendation_id")
+  applicationId      Int    @map("application_id")
+  recommendationType String @map("recommendation_type") @db.VarChar(80)
+  text               String @db.Text
+
+  application InsuranceApplication @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@map("recommendations")
+}
+
+model RoutingTask {
+  taskId        Int       @id @default(autoincrement()) @map("task_id")
+  applicationId Int      @map("application_id")
+  assignedTo    Int?     @map("assigned_to")
+  stage         String   @db.VarChar(80)
+  status        String   @db.VarChar(50)
+  dueAt         DateTime? @map("due_at")
+
+  application InsuranceApplication @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+  assignee    User?                @relation(fields: [assignedTo], references: [userId])
+
+  @@map("routing_tasks")
+}
+
+model AuditLog {
+  logId         Int      @id @default(autoincrement()) @map("log_id")
+  userId        Int?     @map("user_id")
+  applicationId Int?     @map("application_id")
+  actionType    String   @map("action_type") @db.VarChar(100)
+  details       String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user        User?                 @relation(fields: [userId], references: [userId])
+  application InsuranceApplication? @relation(fields: [applicationId], references: [applicationId], onDelete: SetNull)
+
+  @@map("audit_logs")
 }
