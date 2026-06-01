@@ -1,14 +1,15 @@
+import { Body, Controller, Post } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PropertyRiskInput, ScoringService } from './scoring.service';
 
+@ApiTags('scoring')
+@Controller('scoring')
 export class ScoringController {
-  constructor(private readonly scoringService = new ScoringService()) {}
+  constructor(private readonly scoringService: ScoringService) {}
 
-  /**
-   * POST /scoring/calculate
-   * Расчет скоринговой оценки риска по характеристикам объекта страхования,
-   * результатам проверок безопасности и комплектности документов.
-   */
-  calculate(dto: PropertyRiskInput) {
+  @Post('calculate')
+  @ApiOperation({ summary: 'Расчет скоринговой оценки риска' })
+  calculate(@Body() dto: PropertyRiskInput) {
     return this.scoringService.calculate(dto);
   }
 }
