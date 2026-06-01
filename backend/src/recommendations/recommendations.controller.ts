@@ -1,25 +1,23 @@
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RecommendationInput, RecommendationsService } from './recommendations.service';
 
+@ApiTags('recommendations')
+@Controller('recommendations')
 export class RecommendationsController {
-  constructor(private readonly recommendationsService = new RecommendationsService()) {}
+  constructor(private readonly recommendationsService: RecommendationsService) {}
 
-  /**
-   * POST /recommendations
-   * Формирование рекомендации на основании результата скоринга,
-   * факторов риска, blacklist-признака и комплектности документов.
-   */
-  build(dto: RecommendationInput) {
+  @Post()
+  @ApiOperation({ summary: 'Формирование рекомендации по заявке' })
+  build(@Body() dto: RecommendationInput) {
     return this.recommendationsService.build(dto);
   }
 
-  /**
-   * GET /recommendations/{applicationId}
-   * Учебный эндпоинт для получения демонстрационной рекомендации по заявке.
-   * В промышленной версии данные должны извлекаться из таблицы recommendations.
-   */
-  findByApplication(applicationId: number) {
+  @Get(':applicationId')
+  @ApiOperation({ summary: 'Получение рекомендации по заявке' })
+  findByApplication(@Param('applicationId') applicationId: string) {
     return {
-      applicationId,
+      applicationId: Number(applicationId),
       decisionType: 'manual_review',
       text: 'Демонстрационная рекомендация: требуется анализ андеррайтера по материалам электронного досье.',
       reasons: ['Рекомендация сформирована в учебном прототипе'],
