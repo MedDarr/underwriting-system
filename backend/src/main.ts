@@ -1,13 +1,27 @@
+import 'reflect-metadata';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
-const app = new AppModule();
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.enableCors();
 
-console.log('Underwriting system backend prototype started');
-console.log('Available controllers:');
-console.log('- applicationsController');
-console.log('- securityChecksController');
-console.log('- scoringController');
-console.log('- recommendationsController');
-console.log('- auditController');
+  const config = new DocumentBuilder()
+    .setTitle('Underwriting System API')
+    .setDescription('API программной системы поддержки андеррайтинга страхования частных домов физических лиц')
+    .setVersion('1.0')
+    .addTag('applications')
+    .addTag('security-checks')
+    .addTag('scoring')
+    .addTag('recommendations')
+    .addTag('audit')
+    .build();
 
-export { app };
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
+
+  await app.listen(3000);
+}
+
+bootstrap();
