@@ -1,3 +1,5 @@
+import { Injectable } from '@nestjs/common';
+
 export type RiskLevel = 'low' | 'medium' | 'high';
 export type DecisionType = 'approved' | 'approved_special' | 'need_info' | 'declined' | 'manual_review';
 
@@ -25,6 +27,7 @@ export interface RecommendationView {
   createdAt: string;
 }
 
+@Injectable()
 export class RecommendationsService {
   build(input: RecommendationInput): RecommendationView {
     const reasons = input.factors.map((factor) => `${factor.factorName}: ${factor.recommendation}`);
