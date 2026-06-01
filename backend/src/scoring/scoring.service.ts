@@ -1,3 +1,5 @@
+import { Injectable } from '@nestjs/common';
+
 export type RiskLevel = 'low' | 'medium' | 'high';
 
 export interface PropertyRiskInput {
@@ -37,6 +39,7 @@ interface UnderwritingRule {
   applies: (input: PropertyRiskInput) => boolean;
 }
 
+@Injectable()
 export class ScoringService {
   private readonly rules: UnderwritingRule[] = [
     {
@@ -106,16 +109,7 @@ export class ScoringService {
   ];
 
   calculate(input: PropertyRiskInput): ScoringResultView {
-    const factors = this.rules
-      .filter((rule) => rule.applies(input))
-      .map(({ code, factorName, condition, weight, recommendation }) => ({
-        code,
-        factorName,
-        condition,
-        weight,
-        recommendation,
-      }));
-
+    const factors = this.rules.filter((rule) => rule.applies(input)).map(({ code, factorName, condition, weight, recommendation }) => ({ code, factorName, condition, weight, recommendation }));
     const totalScore = factors.reduce((sum, factor) => sum + factor.weight, 0);
 
     return {
