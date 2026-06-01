@@ -1,3 +1,5 @@
+import { Injectable } from '@nestjs/common';
+
 export type RiskLevel = 'low' | 'medium' | 'high';
 export type RouteStage =
   | 'sales_revision'
@@ -25,6 +27,7 @@ export interface RoutingTaskView {
   createdAt: string;
 }
 
+@Injectable()
 export class RoutingService {
   private tasks: RoutingTaskView[] = [];
 
