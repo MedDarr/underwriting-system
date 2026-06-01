@@ -1,3 +1,5 @@
+import { Injectable } from '@nestjs/common';
+
 export interface ApplicantCheckInput {
   applicantId: number;
   fullName: string;
@@ -20,6 +22,7 @@ export interface SecurityCheckResultView {
   checkedAt: string;
 }
 
+@Injectable()
 export class SecurityChecksService {
   private readonly blacklistNames = ['Иванов Риск', 'Петров Контроль'];
 
