@@ -1,45 +1,41 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApplicationsService, ApplicationStatus, CreateApplicationDto } from './applications.service';
 
-export interface ChangeStatusDto {
-  status: ApplicationStatus;
+export class ChangeStatusDto {
+  status!: ApplicationStatus;
 }
 
+@ApiTags('applications')
+@Controller('applications')
 export class ApplicationsController {
-  constructor(private readonly applicationsService = new ApplicationsService()) {}
+  constructor(private readonly applicationsService: ApplicationsService) {}
 
-  /**
-   * GET /applications
-   * Получение списка заявок на страхование.
-   */
+  @Get()
+  @ApiOperation({ summary: 'Получение списка заявок' })
   findAll() {
     return this.applicationsService.findAll();
   }
 
-  /**
-   * POST /applications
-   * Создание новой заявки и присвоение ей статуса registered.
-   */
-  create(dto: CreateApplicationDto) {
+  @Post()
+  @ApiOperation({ summary: 'Создание новой заявки' })
+  create(@Body() dto: CreateApplicationDto) {
     return this.applicationsService.create(dto);
   }
 
-  /**
-   * GET /applications/{id}
-   * Получение карточки заявки по идентификатору.
-   */
-  findById(id: number) {
-    const application = this.applicationsService.findById(id);
+  @Get(':id')
+  @ApiOperation({ summary: 'Получение карточки заявки' })
+  findById(@Param('id') id: string) {
+    const application = this.applicationsService.findById(Number(id));
     if (!application) {
       throw new Error('Application not found');
     }
     return application;
   }
 
-  /**
-   * PATCH /applications/{id}/status
-   * Изменение статуса заявки на одном из этапов андеррайтинга.
-   */
-  changeStatus(id: number, dto: ChangeStatusDto) {
-    return this.applicationsService.changeStatus(id, dto.status);
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Изменение статуса заявки' })
+  changeStatus(@Param('id') id: string, @Body() dto: ChangeStatusDto) {
+    return this.applicationsService.changeStatus(Number(id), dto.status);
   }
 }
