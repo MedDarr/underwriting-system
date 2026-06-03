@@ -12,6 +12,7 @@ export interface PropertyRiskInput {
   blacklistHit: boolean;
   previousDecline: boolean;
   coverageLimitExceeded: boolean;
+  fireStationDistanceKm?: number;
 }
 
 export interface RiskFactorResult {
@@ -67,6 +68,14 @@ export class ScoringService {
       applies: (input) => new Date().getFullYear() - input.constructionYear > 30,
     },
     {
+      code: 'FIRE_STATION_DISTANCE',
+      factorName: 'Удаленность пожарной части',
+      condition: 'более 15 км до ближайшей пожарной части',
+      weight: 18,
+      recommendation: 'Уточнить противопожарные меры и рассмотреть специальные условия',
+      applies: (input) => (input.fireStationDistanceKm ?? 0) > 15,
+    },
+    {
       code: 'NO_SECURITY_ALARM',
       factorName: 'Сигнализация',
       condition: 'сигнализация отсутствует',
@@ -109,7 +118,17 @@ export class ScoringService {
   ];
 
   calculate(input: PropertyRiskInput): ScoringResultView {
-    const factors = this.rules.filter((rule) => rule.applies(input)).map(({ code, factorName, condition, weight, recommendation }) => ({ code, factorName, condition, weight, recommendation }));
+    this.validateRiskInput(input);
+
+    const factors = this.rules
+      .filter((rule) => rule.applies(input))
+      .map(({ code, factorName, condition, weight, recommendation }) => ({
+        code,
+        factorName,
+        condition,
+        weight,
+        recommendation,
+      }));
     const totalScore = factors.reduce((sum, factor) => sum + factor.weight, 0);
 
     return {
@@ -119,6 +138,22 @@ export class ScoringService {
       factors,
       calculatedAt: new Date().toISOString(),
     };
+  }
+
+  private validateRiskInput(input: PropertyRiskInput): void {
+    const currentYear = new Date().getFullYear();
+
+    if (input.constructionYear < 1850 || input.constructionYear > currentYear) {
+      throw new Error('Construction year is out of allowed range');
+    }
+
+    if (!input.wallMaterial?.trim()) {
+      throw new Error('Wall material is required for scoring');
+    }
+
+    if (!input.heatingType?.trim()) {
+      throw new Error('Heating type is required for scoring');
+    }
   }
 
   private resolveRiskLevel(totalScore: number): RiskLevel {
