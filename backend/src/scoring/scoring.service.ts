@@ -143,6 +143,10 @@ export class ScoringService {
   private validateRiskInput(input: PropertyRiskInput): void {
     const currentYear = new Date().getFullYear();
 
+    if (!input.applicationId || input.applicationId <= 0) {
+      throw new Error('Application identifier is required for scoring');
+    }
+
     if (input.constructionYear < 1850 || input.constructionYear > currentYear) {
       throw new Error('Construction year is out of allowed range');
     }
@@ -153,6 +157,10 @@ export class ScoringService {
 
     if (!input.heatingType?.trim()) {
       throw new Error('Heating type is required for scoring');
+    }
+
+    if (input.fireStationDistanceKm !== undefined && input.fireStationDistanceKm < 0) {
+      throw new Error('Fire station distance must be a positive value');
     }
   }
 
